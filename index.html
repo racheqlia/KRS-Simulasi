@@ -1,0 +1,381 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulasi Sistem KRS Berbasis OOP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar for course list */
+    #courseList {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    #courseList::-webkit-scrollbar {
+      width: 6px;
+    }
+    #courseList::-webkit-scrollbar-thumb {
+      background-color: #3b82f6;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
+  <header class="w-full max-w-5xl mb-6">
+    <h1 class="text-center font-semibold text-xl text-gray-900 mb-1">Simulasi Sistem Kartu Rencana Studi (KRS)</h1>
+    <p class="text-center text-sm text-gray-600 mb-4">Berbasis Algoritma Class dan OOP JavaScript</p>
+  </header>
+
+  <main class="w-full max-w-5xl bg-white rounded-lg shadow p-6 space-y-6">
+    <!-- Login Section -->
+    <section id="loginSection" class="max-w-md mx-auto">
+      <h2 class="font-semibold text-lg mb-3 text-gray-800">Login Mahasiswa</h2>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="nimInput" class="block text-sm font-medium text-gray-700 mb-1">NIM</label>
+          <input type="text" id="nimInput" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label for="namaInput" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+          <input type="text" id="namaInput" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label for="semesterInput" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+          <input type="number" id="semesterInput" min="1" max="14" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label for="ipkInput" class="block text-sm font-medium text-gray-700 mb-1">IPK</label>
+          <input type="number" id="ipkInput" min="0" max="4" step="0.01" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition">Login</button>
+      </form>
+    </section>
+
+    <!-- Main Simulation Section (hidden initially) -->
+    <section id="simulationSection" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:space-x-6">
+        <!-- Course List -->
+        <div class="md:w-1/2 bg-gray-50 rounded p-4 shadow flex flex-col">
+          <h3 class="font-semibold text-gray-800 mb-3">Daftar Mata Kuliah</h3>
+          <div id="courseList" class="flex-grow overflow-y-auto border border-gray-300 rounded p-2 space-y-2">
+            <!-- Course items inserted here dynamically -->
+          </div>
+        </div>
+
+        <!-- KRS Summary -->
+        <div class="md:w-1/2 bg-gray-50 rounded p-4 shadow flex flex-col">
+          <h3 class="font-semibold text-gray-800 mb-3">KRS Mahasiswa</h3>
+          <div id="krsSummary" class="flex-grow overflow-y-auto border border-gray-300 rounded p-2 space-y-2 min-h-[280px]">
+            <p class="text-gray-500">Belum ada mata kuliah yang dipilih.</p>
+          </div>
+          <div class="mt-4 space-y-2">
+            <p><span class="font-semibold">Total SKS Diambil:</span> <span id="totalSKS">0</span></p>
+            <p><span class="font-semibold">Batas Maksimal SKS:</span> <span id="maxSKS">-</span></p>
+            <p><span class="font-semibold">Sisa SKS:</span> <span id="remainingSKS">-</span></p>
+          </div>
+          <button id="ambilBtn" disabled class="mt-4 w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">Ambil KRS</button>
+        </div>
+      </div>
+
+      <!-- Result Section -->
+      <section id="resultSection" class="hidden bg-green-50 border border-green-300 rounded p-4 text-green-800">
+        <h3 class="font-semibold mb-2">Hasil Simulasi KRS</h3>
+        <div id="resultContent"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // Class Definitions
+    class Mahasiswa {
+      constructor(nim, nama, semester, ipk) {
+        this.nim = nim;
+        this.nama = nama;
+        this.semester = semester;
+        this.ipk = ipk;
+        this.sksLulus = 0; // can be extended
+        this.mataKuliahDipilih = [];
+      }
+      hitungSKSMaksimal() {
+        if (this.ipk >= 3.00) return 24;
+        if (this.ipk >= 2.50) return 22;
+        if (this.ipk >= 2.00) return 20;
+        return 18;
+      }
+      tambahMataKuliah(mk) {
+        this.mataKuliahDipilih.push(mk);
+      }
+      totalSKSYangDiambil() {
+        return this.mataKuliahDipilih.reduce((acc, mk) => acc + mk.sks, 0);
+      }
+      hapusMataKuliah(kode) {
+        this.mataKuliahDipilih = this.mataKuliahDipilih.filter(mk => mk.kode !== kode);
+      }
+    }
+
+    class MataKuliah {
+      constructor(kode, nama, sks, kuotaMaks, prasyarat = [], jadwal = []) {
+        this.kode = kode;
+        this.nama = nama;
+        this.sks = sks;
+        this.kuotaMaks = kuotaMaks;
+        this.daftarPeserta = [];
+        this.prasyarat = prasyarat; // array of course codes
+        this.jadwal = jadwal; // array of {hari, jamMulai, jamSelesai}
+      }
+      tambahPeserta(mahasiswa) {
+        if (this.tersisaKuota() > 0) {
+          this.daftarPeserta.push(mahasiswa.nim);
+          return true;
+        }
+        return false;
+      }
+      hapusPeserta(nim) {
+        this.daftarPeserta = this.daftarPeserta.filter(n => n !== nim);
+      }
+      tersisaKuota() {
+        return this.kuotaMaks - this.daftarPeserta.length;
+      }
+    }
+
+    class KRS {
+      constructor(mahasiswa) {
+        this.mahasiswa = mahasiswa;
+        this.daftarMataKuliah = [];
+      }
+      tambahMataKuliah(mk) {
+        if (!this.daftarMataKuliah.find(m => m.kode === mk.kode)) {
+          this.daftarMataKuliah.push(mk);
+          this.mahasiswa.tambahMataKuliah(mk);
+          mk.tambahPeserta(this.mahasiswa);
+          return true;
+        }
+        return false;
+      }
+      hapusMataKuliah(kode) {
+        const mk = this.daftarMataKuliah.find(m => m.kode === kode);
+        if (mk) {
+          mk.hapusPeserta(this.mahasiswa.nim);
+          this.daftarMataKuliah = this.daftarMataKuliah.filter(m => m.kode !== kode);
+          this.mahasiswa.hapusMataKuliah(kode);
+        }
+      }
+      validasiSKS() {
+        return this.mahasiswa.totalSKSYangDiambil() <= this.mahasiswa.hitungSKSMaksimal();
+      }
+      validasiPrasyarat(mk) {
+        // Check if all prasyarat are in mahasiswa's lulus or dipilih
+        for (const prasyaratKode of mk.prasyarat) {
+          const sudahLulus = false; // For simulation, assume no lulus courses
+          const sudahDipilih = this.daftarMataKuliah.some(m => m.kode === prasyaratKode);
+          if (!sudahLulus && !sudahDipilih) return false;
+        }
+        return true;
+      }
+      validasiJadwal(mk) {
+        // Check if jadwal mk conflicts with any already chosen mk
+        for (const mkDipilih of this.daftarMataKuliah) {
+          for (const jadwal1 of mk.jadwal) {
+            for (const jadwal2 of mkDipilih.jadwal) {
+              if (jadwal1.hari === jadwal2.hari) {
+                // Check time overlap
+                if (!(jadwal1.jamSelesai <= jadwal2.jamMulai || jadwal1.jamMulai >= jadwal2.jamSelesai)) {
+                  return false;
+                }
+              }
+            }
+          }
+        }
+        return true;
+      }
+      validasiKuota(mk) {
+        return mk.tersisaKuota() > 0;
+      }
+      validasiTambahMataKuliah(mk) {
+        if (!this.validasiKuota(mk)) {
+          alert(`Kuota mata kuliah ${mk.nama} sudah penuh.`);
+          return false;
+        }
+        if (!this.validasiPrasyarat(mk)) {
+          alert(`Prasyarat mata kuliah ${mk.nama} belum terpenuhi.`);
+          return false;
+        }
+        if (!this.validasiJadwal(mk)) {
+          alert(`Jadwal mata kuliah ${mk.nama} bentrok dengan mata kuliah lain.`);
+          return false;
+        }
+        if (this.mahasiswa.totalSKSYangDiambil() + mk.sks > this.mahasiswa.hitungSKSMaksimal()) {
+          alert(`Penambahan mata kuliah ${mk.nama} melebihi batas maksimal SKS.`);
+          return false;
+        }
+        return true;
+      }
+    }
+
+    // Sample Data Mata Kuliah (kode, nama, sks, kuotaMaks, prasyarat, jadwal)
+    // jadwal: [{hari: "Senin", jamMulai: 8, jamSelesai: 10}, ...]
+    const mataKuliahData = [
+      new MataKuliah("MTK101", "Matematika Dasar", 3, 30, [], [{hari:"Senin", jamMulai:8, jamSelesai:10}]),
+      new MataKuliah("FIS101", "Fisika Dasar", 3, 25, [], [{hari:"Selasa", jamMulai:10, jamSelesai:12}]),
+      new MataKuliah("KIM101", "Kimia Dasar", 3, 20, [], [{hari:"Rabu", jamMulai:8, jamSelesai:10}]),
+      new MataKuliah("MTK201", "Aljabar Linear", 4, 30, ["MTK101"], [{hari:"Kamis", jamMulai:8, jamSelesai:11}]),
+      new MataKuliah("MTK202", "Kalkulus II", 4, 30, ["MTK101"], [{hari:"Jumat", jamMulai:10, jamSelesai:13}]),
+      new MataKuliah("INF101", "Pengantar Informatika", 3, 40, [], [{hari:"Senin", jamMulai:10, jamSelesai:12}]),
+      new MataKuliah("INF201", "Struktur Data", 3, 35, ["INF101"], [{hari:"Selasa", jamMulai:8, jamSelesai:10}]),
+      new MataKuliah("MTK301", "Statistika", 3, 25, ["MTK201"], [{hari:"Rabu", jamMulai:10, jamSelesai:12}]),
+      new MataKuliah("MTK302", "Analisis Real", 4, 20, ["MTK202"], [{hari:"Kamis", jamMulai:13, jamSelesai:16}]),
+      new MataKuliah("INF301", "Basis Data", 3, 30, ["INF201"], [{hari:"Jumat", jamMulai:8, jamSelesai:10}]),
+    ];
+
+    // Global variables
+    let mahasiswa = null;
+    let krs = null;
+
+    // DOM Elements
+    const loginForm = document.getElementById("loginForm");
+    const loginSection = document.getElementById("loginSection");
+    const simulationSection = document.getElementById("simulationSection");
+    const courseListDiv = document.getElementById("courseList");
+    const krsSummaryDiv = document.getElementById("krsSummary");
+    const totalSKSEl = document.getElementById("totalSKS");
+    const maxSKSEl = document.getElementById("maxSKS");
+    const remainingSKSEl = document.getElementById("remainingSKS");
+    const ambilBtn = document.getElementById("ambilBtn");
+    const resultSection = document.getElementById("resultSection");
+    const resultContent = document.getElementById("resultContent");
+
+    // Functions
+    function renderCourseList() {
+      courseListDiv.innerHTML = "";
+      mataKuliahData.forEach(mk => {
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center border border-gray-300 rounded p-2 bg-white";
+
+        const infoDiv = document.createElement("div");
+        infoDiv.className = "flex flex-col";
+        const kodeSpan = document.createElement("span");
+        kodeSpan.className = "font-semibold text-gray-800";
+        kodeSpan.textContent = mk.kode;
+        const namaSpan = document.createElement("span");
+        namaSpan.className = "text-sm text-gray-600";
+        namaSpan.textContent = mk.nama;
+        const sksSpan = document.createElement("span");
+        sksSpan.className = "text-xs text-gray-500";
+        sksSpan.textContent = `SKS: ${mk.sks} | Kuota: ${mk.tersisaKuota()}/${mk.kuotaMaks}`;
+        infoDiv.appendChild(kodeSpan);
+        infoDiv.appendChild(namaSpan);
+        infoDiv.appendChild(sksSpan);
+
+        const btn = document.createElement("button");
+        btn.textContent = "Pilih";
+        btn.className = "bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition";
+        btn.disabled = krs.daftarMataKuliah.some(m => m.kode === mk.kode);
+        btn.addEventListener("click", () => {
+          if (krs.validasiTambahMataKuliah(mk)) {
+            krs.tambahMataKuliah(mk);
+            updateUI();
+          }
+        });
+
+        div.appendChild(infoDiv);
+        div.appendChild(btn);
+        courseListDiv.appendChild(div);
+      });
+    }
+
+    function renderKRSSummary() {
+      krsSummaryDiv.innerHTML = "";
+      if (krs.daftarMataKuliah.length === 0) {
+        krsSummaryDiv.innerHTML = '<p class="text-gray-500">Belum ada mata kuliah yang dipilih.</p>';
+        return;
+      }
+      krs.daftarMataKuliah.forEach(mk => {
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center border border-gray-300 rounded p-2 bg-white";
+
+        const infoDiv = document.createElement("div");
+        infoDiv.className = "flex flex-col";
+        const kodeSpan = document.createElement("span");
+        kodeSpan.className = "font-semibold text-gray-800";
+        kodeSpan.textContent = mk.kode;
+        const namaSpan = document.createElement("span");
+        namaSpan.className = "text-sm text-gray-600";
+        namaSpan.textContent = mk.nama;
+        const sksSpan = document.createElement("span");
+        sksSpan.className = "text-xs text-gray-500";
+        sksSpan.textContent = `SKS: ${mk.sks}`;
+        infoDiv.appendChild(kodeSpan);
+        infoDiv.appendChild(namaSpan);
+        infoDiv.appendChild(sksSpan);
+
+        const btn = document.createElement("button");
+        btn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        btn.className = "text-red-600 hover:text-red-800";
+        btn.title = "Hapus Mata Kuliah";
+        btn.addEventListener("click", () => {
+          krs.hapusMataKuliah(mk.kode);
+          updateUI();
+        });
+
+        div.appendChild(infoDiv);
+        div.appendChild(btn);
+        krsSummaryDiv.appendChild(div);
+      });
+    }
+
+    function updateUI() {
+      renderCourseList();
+      renderKRSSummary();
+      const totalSKS = mahasiswa.totalSKSYangDiambil();
+      const maxSKS = mahasiswa.hitungSKSMaksimal();
+      totalSKSEl.textContent = totalSKS;
+      maxSKSEl.textContent = maxSKS;
+      remainingSKSEl.textContent = maxSKS - totalSKS;
+      ambilBtn.disabled = totalSKS === 0 || totalSKS > maxSKS;
+      resultSection.classList.add("hidden");
+      resultContent.innerHTML = "";
+    }
+
+    // Event Listeners
+    loginForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const nim = document.getElementById("nimInput").value.trim();
+      const nama = document.getElementById("namaInput").value.trim();
+      const semester = parseInt(document.getElementById("semesterInput").value);
+      const ipk = parseFloat(document.getElementById("ipkInput").value);
+
+      if (!nim || !nama || isNaN(semester) || isNaN(ipk)) {
+        alert("Mohon isi semua data dengan benar.");
+        return;
+      }
+
+      mahasiswa = new Mahasiswa(nim, nama, semester, ipk);
+      krs = new KRS(mahasiswa);
+
+      loginSection.classList.add("hidden");
+      simulationSection.classList.remove("hidden");
+
+      updateUI();
+    });
+
+    ambilBtn.addEventListener("click", () => {
+      // Simpan hasil simulasi dan tampilkan ringkasan
+      if (!krs.validasiSKS()) {
+        alert("Total SKS melebihi batas maksimal. Harap sesuaikan pilihan mata kuliah.");
+        return;
+      }
+      resultSection.classList.remove("hidden");
+      let html = `<p>Mahasiswa: <strong>${mahasiswa.nama} (${mahasiswa.nim})</strong></p>`;
+      html += `<p>Semester: <strong>${mahasiswa.semester}</strong> | IPK: <strong>${mahasiswa.ipk.toFixed(2)}</strong></p>`;
+      html += `<p>Total SKS Diambil: <strong>${mahasiswa.totalSKSYangDiambil()}</strong></p>`;
+      html += `<h4 class="mt-3 font-semibold">Mata Kuliah yang Diambil:</h4>`;
+      html += `<ul class="list-disc list-inside">`;
+      krs.daftarMataKuliah.forEach(mk => {
+        html += `<li>${mk.kode} - ${mk.nama} (${mk.sks} SKS)</li>`;
+      });
+      html += `</ul>`;
+      resultContent.innerHTML = html;
+      alert("Simulasi KRS berhasil disimpan.");
+    });
+  </script>
+</body>
+</html>
