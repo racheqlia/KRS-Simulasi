@@ -97,8 +97,8 @@
       }
       hitungSKSMaksimal() {
         if (this.ipk >= 3.00) return 24;
-        if (this.ipk >= 2.50) return 22;
-        if (this.ipk >= 2.00) return 20;
+        if (this.ipk <= 2.99) return 20;
+        if (this.ipk <= 2.00) return 18;
         return 18;
       }
       tambahMataKuliah(mk) {
